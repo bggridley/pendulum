@@ -43,16 +43,20 @@ public:
 	Resources getResources();
 
 	GLuint pbo;
+	GLuint fbo, render_buf;
 
 	std::vector<float> pointArray;
 
-	float iw = 3840;
-	float ih = 3840;
+	float iw = 1280;// 3840;//1280;// 3840;
+	float ih = 720;//3840;// 720;// 3840;
 	float mass1 = 40;
 	float mass2 = 40;
 
-	float length1 = 125.0f;
-	float length2 = 180.0f;
+	float length1 = 250.0f; // 125
+	float length2 = 180.0f; // 180
+
+	float sx = iw / 2;
+	float sy = ih / 2;
 
 	float theta1 = 3.14f;
 	float theta2 = 0.0f;

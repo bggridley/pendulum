@@ -74,19 +74,47 @@ int main(int argc, char** argv) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, game->getWidth(), game->getHeight(), 0, -1, 1);
+	glEnable(GL_MULTISAMPLE);
 
 	// done once, give us a fresh projection matrix.
 
 	//glDisable(GL_DEPTH_TEST);
 
 	GLuint pbo;
-	glGenBuffers(1, &pbo);
-	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
-	glBufferData(GL_PIXEL_PACK_BUFFER, game->iw * game->ih * 4, NULL, GL_DYNAMIC_READ);
+//	glGenBuffers(1, &pbo);
+//	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+//	glBufferData(GL_PIXEL_PACK_BUFFER, game->iw * game->ih * 4, NULL, GL_DYNAMIC_READ);
+
+	GLuint fbo, render_buf;
+	GLuint depthrenderbuffer;
+	glGenFramebuffers(1, &fbo);
+	glGenRenderbuffers(1, &render_buf);
+	glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, game->iw, game->ih);
+	//glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA, game->iw, game->ih);
+
+	glGenRenderbuffers(1, &depthrenderbuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+	//(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+
+	std::cout << ((glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)) << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	
+	
+
+
 
 
 	SDL_GL_SetSwapInterval(1);
-	game->pbo = pbo;
+	game->fbo = fbo;
+	game->render_buf = render_buf;
+//	game->pbo = pbo;
 	game->init();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -170,6 +198,8 @@ int main(int argc, char** argv) {
 		//glViewport(0, 0, game->getWidth(), game->getWidth());
 		glClearColor(1.0f, 1.0f, 1.0f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+		//glEnable(GL_BLEND);
 
 		game->render(alpha);
 
@@ -185,6 +215,8 @@ int main(int argc, char** argv) {
 
 end:
 	glDeleteBuffers(1, &pbo);
+	glDeleteFramebuffers(1, &fbo);
+	glDeleteRenderbuffers(1, &render_buf);
 	SDL_DestroyWindow(game->window);
 	Mix_Quit();
     IMG_Quit();

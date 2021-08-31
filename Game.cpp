@@ -1,4 +1,4 @@
-#include "Game.h"
+﻿#include "Game.h"
 #include "math.h"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -57,7 +57,7 @@ void Game::input(SDL_Event* event) {
 		case SDLK_9:
 			const float w = getWidth();
 			const float h = getHeight();
-		
+
 			/*
 			GLsizei nrChannels = 3;
 			GLsizei stride = nrChannels * w;
@@ -69,14 +69,38 @@ void Game::input(SDL_Event* event) {
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
 			*/
 
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
-			glReadPixels(0, 0, iw, ih, GL_RGBA, GL_UNSIGNED_BYTE, 0); // 0 instead of a pointer, it is now an offset in the buffer.
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glDisable(GL_SCISSOR_TEST);
+			glLoadIdentity();
+			glMatrixMode(GL_PROJECTION);
+			glViewport(0, 0, iw, ih);
+			glOrtho(0, iw, ih, 0, -1, 1);
+			glEnable(GL_MULTISAMPLE);
+			//after drawing
 			
+			//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			render(0.66f);
-			glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			std::vector<std::uint8_t> data(iw * ih * 4);
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			glReadPixels(0, 0, iw, ih, GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
+
+
+
+
+			//std::cout << sizeof & data[0] << std::endl;
+
+			// Return to onscreen rendering:
+
+
+			//glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
+			//glReadPixels(0, 0, iw, ih, GL_RGBA, GL_UNSIGNED_BYTE, 0); // 0 instead of a pointer, it is now an offset in the buffer.
+
+
+
+
 			//DO SOME OTHER STUFF (otherwise this is a waste of your time)
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo); //Might not be necessary...
+			//glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo); //Might not be necessary...
 
 
 			GLsizei nrChannels = 4;
@@ -85,17 +109,26 @@ void Game::input(SDL_Event* event) {
 
 			//void* pixels = 
 			stbi_flip_vertically_on_write(true);
-			stbi_write_png("test.png", iw, ih, nrChannels, glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY), stride);
+			stbi_write_png("test.png", iw, ih, nrChannels, &data[0], stride);
 
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			//std::cout << GL_MAX_SAMPLES << std::endl;
+
+			glLoadIdentity();
+			glMatrixMode(GL_PROJECTION);
+			glViewport(0, 0, getWidth(), getHeight());
+			//glViewport(0, 0, getWidth(), getHeight());
+			glOrtho(0, getWidth(), getHeight(), 0, -1, 1);
 			//glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 			//glUnmapBuffer(pbo);
-			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); /* unbind the PBO */
+			//glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+			//glBindBuffer(GL_PIXEL_PACK_BUFFER, 0); /* unbind the PBO */
 
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
+			//glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pbo);
 			/*          ^^^^^^--- You need to bind your PBO for UNPACKING! */
-		//	glDrawPixels(width, height, GL_RGBA, GL_FLOAT, 0);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			//glDrawPixels(iw, ih, GL_RGBA, GL_FLOAT, 0);
+			//glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
 			//delete[] pixels;
 			//stbi_write_png("test.png", w, h, nrChannels, buffer.data(), stride);
@@ -105,9 +138,9 @@ void Game::input(SDL_Event* event) {
 
 			// Free resources
 			//FreeImage_Unload(image);
-			
+
 			break;
-			
+
 		}
 	}
 
@@ -165,8 +198,8 @@ void Game::update(float delta, int updateCount, int fps) {
 	theta1 += theta1_v;
 	theta2 += theta2_v;
 
-	int midX = getWidth() / 2;
-	int midY = getHeight() / 2;
+	int midX = sx;//getWidth() / 2;
+	int midY = sy;//getHeight() / 2;
 
 	if (zoomOut) {
 		scale -= 0.1 * delta;
@@ -179,43 +212,17 @@ void Game::update(float delta, int updateCount, int fps) {
 
 
 	}
-}
 
-void Game::drawSquiggle(float x, float y, float width, float height) {
-
-
-
-	for (int i = 0; i < 1000; i++) {
-		float xx = std::cos(i * 3.14 / 180);
-		float yy = std::sin(i * 3.14 / 180);
-
-		//dstd::cout << y << std::endl;
-		renderer.drawPoint(x + (xx * (width / scale / 2)), y + ((yy * height / scale / 2)), 1.0f, 1.0f, 1.0f);
-	}
-}
-
-
-
-void Game::render(float alpha) {
-	//std::cout << alpha << std::endl;
-	//std::string framespersec = "FPS:" + std::to_string(fps);
-	//font.setScale(1.0f);
-	//font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-	//font.renderString(0, 0, framespersec);
-
-	renderer.setScale(scale);
-	//renderer.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, 0);
-	// 100 is length
-
-	float startX = getWidth() / 2;
-	float startY = getHeight() / 2;
+	float startX = sx;//getWidth() / 2; //sx;// getWidth() / 2;
+	float startY = sy;// getHeight() / 2; //sy;// getHeight() / 2;
+	//std::cout << startX << std::endl;
 
 	float c1[] = { abs(pa * 10), abs(pv * 10), 1 - abs(pa) * 3, 1.0f };
-	float c2[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float c2[] = { .0f, .0f, .0f, 1.0f };
 
 	float x = length1 * sin(theta1);
 	float y = length1 * cos(theta1);
-	renderer.drawLine(startX, startY, startX + x, startY + y, c2, c2);
+	//renderer.drawLine(startX, startY, startX + x, startY + y, c2, c2);
 
 
 	float x2 = length2 * sin(theta2);
@@ -223,8 +230,7 @@ void Game::render(float alpha) {
 
 
 
-	renderer.drawLine(startX + x, startY + y, startX + x + x2, startY + y + y2, c2, c2);
-
+	//renderer.drawLine(startX + x, startY + y, startX + x + x2, startY + y + y2, c2, c2);
 
 
 	//glPopMatrix();
@@ -238,78 +244,102 @@ void Game::render(float alpha) {
 
 	// we know that px and py are never gonna be 0 so....
 
-	if (px != 0.0f && py != 0.0f && fps > 50) {
-		pointArray.push_back(startX + x + x2);
-		pointArray.push_back(startY + y + y2);
+	if (px != 0.0f && py != 0.0f) {
+		
+
+
+		float perpX = (startY + y + y2 - py);
+		float perpY = -(startX + x + x2 - px);
+
+
+		float length = sqrt(perpX * perpX + perpY * perpY);
+
+		perpX /= length;
+		perpY /= length;
+
+		//std::cout << "perp:" << perpX << std::endl;
+		pointArray.push_back(startX + x + x2 - perpX * 10);
+		pointArray.push_back(startY + y + y2 - perpY * 10);
+		pointArray.push_back(((((startX + x + x2) * 1.5) - px / 2)) + perpX * 10);
+		pointArray.push_back(((((startY + y + y2) * 1.5) - py / 2)) + perpY * 10);
 		pointArray.push_back(c1[0]);
 		pointArray.push_back(c1[1]);
 		pointArray.push_back(c1[2]);
-
-		if (pointArray.size() > 5) {
-			for (int i = 5; i < pointArray.size(); i += 5) {
-				float c[] = { pointArray[i - 3], pointArray[i - 2], pointArray[i - 1] };
-				float cc[] = { pointArray[i + 2], pointArray[i + 3], pointArray[i + 4] };
-				renderer.drawLine(pointArray[i - 5], pointArray[i - 4], pointArray[i], pointArray[i + 1], c, cc);
-			}
-		}
-		
 	}
 	else {
-		//std::cout << "first" << std::endl;
+		std::cout << "bad" << std::endl;
 	}
-
 
 	px = startX + x + x2;
 	py = startY + y + y2;
 
 	pv = theta2_v;
+}
 
-	//drawSquiggle(getWidth() / 2, getHeight() / 2, getWidth(), getHeight());
-	/*
+void Game::drawSquiggle(float x, float y, float width, float height) {
 
-	if (state == GameState::MAIN_MENU) {
-		font.setScale(1.0f);
-		font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-		font.renderString(0, 0, framespersec);
+
+
+	for (int i = 0; i < 1000; i++) {
+		float xx = std::cos(i * 3.14 / 180);
+		float yy = std::sin(i * 3.14 / 180);
+
+		//dstd::cout << y << std::endl;
+		//renderer.drawPoint(x + (xx * (width / scale / 2)), y + ((yy * height / scale / 2)), 1.0f, 1.0f, 1.0f);
 	}
-	else if (state == GameState::INGAME) {
-		//world->getPlayer()->lerpTranslation(alpha, getScale()); // still in the projection matrix
-		world->render(alpha);
-
-		font.setScale(1.0f);
-		font.setColor((rand() % 255) / 255.0f, (rand() % 255) / 255.0f, (rand() % 255) / 255.0f, 1.0f);
-
-		font.renderCenteredString(world->getPlayer()->getLerpX(alpha) + world->getPlayer()->getWidth() / 2, world->getPlayer()->getLerpY(alpha) - 30.0f, "hello");
-
-		std::string activechunks = "CHUNKS: " + std::to_string(world->getActiveChunks().size());
-		std::string coords = "XY: " + std::to_string((int)world->getPlayer()->getX() / 32) + ", " + std::to_string(((world->getHeight() * 32) - (int)world->getPlayer()->getY() / 32));
-		std::string entities = "Entities: " + std::to_string(world->getEntityCount());
-		glPopMatrix();
-		font.setScale(1.0f);
-		font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-		font.renderString(0, 0, framespersec);
-		//std::string string = "hey " + std::to_string((int)testX);
-	// this render string could be used to display anything above any player in the world
-		font.renderString(0, 32, activechunks);
-		font.renderString(0, 64, coords);
-		font.renderString(0, 96, entities);
+}
 
 
 
+void Game::render(float alpha) {
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+
+	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	//std::cout << alpha << std::endl;
+	//std::string framespersec = "FPS:" + std::to_string(fps);
+	//font.setScale(1.0f);
+	//font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+	//font.renderString(0, 0, framespersec);
+
+	renderer.setScale(scale);
+
+	//float c1[] = {  1.0f, 0.0f, 0.0f } ;
+	//renderer.drawLine(100, 100, 200, 200, c1, c1);
+	//renderer.drawLine(200, 200, 300, 100, c1, c1);
+	//renderer.drawCircle(getWidth() / 2, getHeight() / 2, getWidth() / 2, 0);
+	// 100 is length
+
+
+	//glLineWidth(10.0f);
+	glEnable(GL_POLYGON_SMOOTH);
+	//glEnable(GL_MULTISAMPLE);
+	glBegin(GL_TRIANGLE_STRIP);
+
+	for (int i = 0; i < pointArray.size(); i += 7) {
 
 
 
-		inventory->render();
-		glPushMatrix();
+		float c[] = { pointArray[i + 4], pointArray[i + 5], pointArray[i + 6] };
+		//if (pointArray.size() > 20) {
+		//	renderer.drawBezier(pointArray[i - 15], pointArray[i - 14], pointArray[i - 10], pointArray[i - 9], pointArray[i - 5], pointArray[i - 4], pointArray[i], pointArray[i + 1], c);
+		//}
+		//float cc[] = { pointArray[i + 2], pointArray[i + 3], pointArray[i + 4] };
+		//renderer.drawLine(pointArray[i - 5], pointArray[i - 4], pointArray[i], pointArray[i + 1], c, cc);
+
+		glPointSize(10.0f);
+		///renderer.drawPoint(pointArray[i], pointArray[i + 1], c[0], c[1], c[2]);
+	//	renderer.drawPoint(pointArray[i + 2], pointArray[i + 3], c[0], c[1], c[2]);
+		glColor4f(c[0], c[1], c[2], 0.5f);
+		glVertex2f(pointArray[i], pointArray[i + 1]);
+		glColor4f(c[0], c[1], c[2], 0.5f);
+		glVertex2f(pointArray[i + 2], pointArray[i + 3]);
 	}
 
-	if (currentGui != nullptr) {
-		//glPushMatrix();
-		currentGui->render(alpha);
-		//	glPopMatrix(); // so the world rendering isn't fucked up
-	}
 
-	*/
+	
+	glEnd();
 }
 
 void Game::setDimensions(float width, float height) {
