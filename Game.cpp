@@ -69,22 +69,46 @@ void Game::input(SDL_Event* event) {
 			glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, buffer.data());
 			*/
 
-			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-			glDisable(GL_SCISSOR_TEST);
+			//std::cout << glGetError() << std::endl;
+			
+			std::cout << glGetError() << std::endl;
+			//glDisable(GL_SCISSOR_TEST);
 			glLoadIdentity();
 			glMatrixMode(GL_PROJECTION);
 			glViewport(0, 0, iw, ih);
 			glOrtho(0, iw, ih, 0, -1, 1);
-			glEnable(GL_MULTISAMPLE);
+
+			
+			//glEnable(GL_MULTISAMPLE);
+			std::cout << glGetError() << std::endl;
 			//after drawing
 			
 			//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 			//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			//glClearColor(1.0f, 1.0f, 1.0f, 0.f);
+			//glClear(GL_COLOR_BUFFER_BIT);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			render(0.66f);
-			std::vector<std::uint8_t> data(iw * ih * 4);
-			glReadBuffer(GL_COLOR_ATTACHMENT0);
-			glReadPixels(0, 0, iw, ih, GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
+		
 
+			//std::cout << glGetError() << std::endl;
+
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+			std::cout << glGetError() << std::endl;
+			glReadBuffer(GL_COLOR_ATTACHMENT0);
+			std::cout << glGetError() << std::endl;
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, normal_fbo);
+			std::cout << glGetError() << std::endl;
+			glDrawBuffer(GL_COLOR_ATTACHMENT0);
+			std::cout << glGetError() << std::endl;
+			glBlitFramebuffer(0, 0, iw, ih, 0, 0, iw, ih, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			std::cout << "yea" << glGetError() << std::endl;
+			glBindFramebuffer(GL_FRAMEBUFFER, normal_fbo);
+			std::cout << glGetError() << std::endl;
+			
+			std::vector<std::uint8_t> data(iw * ih * 4);
+			glReadPixels(0, 0, iw, ih, GL_RGBA, GL_UNSIGNED_BYTE, &data[0]);
+			std::cout << glGetError() << std::endl;
 
 
 
@@ -294,6 +318,7 @@ void Game::drawSquiggle(float x, float y, float width, float height) {
 void Game::render(float alpha) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
+	//std::cout << "a" << glGetError() << std::endl;
 
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -313,7 +338,7 @@ void Game::render(float alpha) {
 
 
 	//glLineWidth(10.0f);
-	glEnable(GL_POLYGON_SMOOTH);
+	//glEnable(GL_POLYGON_SMOOTH);
 	//glEnable(GL_MULTISAMPLE);
 	glBegin(GL_TRIANGLE_STRIP);
 
@@ -328,7 +353,7 @@ void Game::render(float alpha) {
 		//float cc[] = { pointArray[i + 2], pointArray[i + 3], pointArray[i + 4] };
 		//renderer.drawLine(pointArray[i - 5], pointArray[i - 4], pointArray[i], pointArray[i + 1], c, cc);
 
-		glPointSize(10.0f);
+		//glPointSize(10.0f);
 		///renderer.drawPoint(pointArray[i], pointArray[i + 1], c[0], c[1], c[2]);
 	//	renderer.drawPoint(pointArray[i + 2], pointArray[i + 3], c[0], c[1], c[2]);
 		glColor4f(c[0], c[1], c[2], 0.5f);

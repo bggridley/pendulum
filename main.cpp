@@ -74,7 +74,6 @@ int main(int argc, char** argv) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(0, game->getWidth(), game->getHeight(), 0, -1, 1);
-	glEnable(GL_MULTISAMPLE);
 
 	// done once, give us a fresh projection matrix.
 
@@ -85,40 +84,100 @@ int main(int argc, char** argv) {
 //	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
 //	glBufferData(GL_PIXEL_PACK_BUFFER, game->iw * game->ih * 4, NULL, GL_DYNAMIC_READ);
 
-	GLuint fbo, render_buf;
-	GLuint depthrenderbuffer;
-	glGenFramebuffers(1, &fbo);
+	GLuint fbo, render_buf, normal_fbo, normal_render_buf;
+	GLuint normal_depthrenderbuffer, depthrenderbuffer;
+	GLuint texture, normal_texture;
+
+	glGenTextures(1, &normal_texture);
+	glBindTexture(GL_TEXTURE_2D, normal_texture);
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+	}
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, game->iw, game->ih, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture);
+	//glEnable(GL_TEXTURE_2D_MULTISAMPLE);
+//	std::cout << glGetError() << std::endl;
+	{
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//	std::cout << glGetError() << std::endl;
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		//std::cout << glGetError() << std::endl;
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		//std::cout << glGetError() << std::endl;
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	///	std::cout << glGetError() << std::endl;
+		glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_GENERATE_MIPMAP, GL_TRUE);
+			//std::cout << glGetError() << std::endl;;
+
+	}
+
+
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 8, GL_RGBA, game->iw, game->ih, GL_TRUE);
+
+
+
+	glGenRenderbuffers(1, &normal_render_buf);
+	glBindRenderbuffer(GL_RENDERBUFFER, normal_render_buf);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, game->iw, game->ih);
+	glGenRenderbuffers(1, &normal_depthrenderbuffer);
+	glBindRenderbuffer(GL_RENDERBUFFER, normal_depthrenderbuffer);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	//std::cout << glGetError() << std::endl;
+	
+	
+
 	glGenRenderbuffers(1, &render_buf);
 	glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA, game->iw, game->ih);
-	//glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_RGBA, game->iw, game->ih);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_RGBA8, game->iw, game->ih);
+	std::cout << glGetError() << std::endl;
+	//glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_RGBA8, game->iw, game->ih);
 
 	glGenRenderbuffers(1, &depthrenderbuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-	//(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, game->iw, game->ih);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	std::cout << glGetError() << std::endl;
+	
+	
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glFramebufferRenderbuffer(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+	glGenFramebuffers(1, &normal_fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, normal_fbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, normal_texture, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, normal_render_buf);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, normal_depthrenderbuffer);
+	std::cout << glGetError() << std::endl;
 
-	std::cout << ((glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)) << std::endl;
+	std::cout << glCheckFramebufferStatus(GL_FRAMEBUFFER) << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	
-	
-
+	std::cout << glGetError() << std::endl;
+	glBindTexture(GL_TEXTURE_2D, 0);
+	std::cout << glGetError() << std::endl;
 
 
 
 	SDL_GL_SetSwapInterval(1);
 	game->fbo = fbo;
+	game->normal_fbo = normal_fbo;
 	game->render_buf = render_buf;
 //	game->pbo = pbo;
 	game->init();
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	std::cout << glGetError() << std::endl;
 
 	int curFPS = 0;
 
@@ -189,6 +248,7 @@ int main(int argc, char** argv) {
 
 		float alpha = accumulator / dt;
 		glPushMatrix();
+		//std::cout << glGetError() << std::endl;
 		//glScalef(scale, scale, 1.0f);
 	
 	
@@ -196,8 +256,8 @@ int main(int argc, char** argv) {
 		// render here
 
 		//glViewport(0, 0, game->getWidth(), game->getWidth());
-		glClearColor(1.0f, 1.0f, 1.0f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		//glClearColor(1.0f, 1.0f, 1.0f, 0.f);
+		//glClear(GL_COLOR_BUFFER_BIT);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 		//glEnable(GL_BLEND);
 
@@ -216,6 +276,8 @@ int main(int argc, char** argv) {
 end:
 	glDeleteBuffers(1, &pbo);
 	glDeleteFramebuffers(1, &fbo);
+	glDeleteFramebuffers(1, &normal_fbo);
+	glDeleteRenderbuffers(1, &depthrenderbuffer);
 	glDeleteRenderbuffers(1, &render_buf);
 	SDL_DestroyWindow(game->window);
 	Mix_Quit();

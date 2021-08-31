@@ -43,7 +43,7 @@ public:
 	Resources getResources();
 
 	GLuint pbo;
-	GLuint fbo, render_buf;
+	GLuint fbo, render_buf, normal_fbo;
 
 	std::vector<float> pointArray;
 
