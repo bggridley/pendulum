@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
 
 
 	Game* game = new Game(); // create a new game instance
-	game->setDimensions(mode.w / 1.5, mode.h / 1.5);
-	game->setFullscreenDimensions(mode.w, mode.h);
+	//game->setDimensions(mode.w / 1.5, mode.h / 1.5);
+	//game->setFullscreenDimensions(mode.w, mode.h);
 	game->window = SDL_CreateWindow("Game!", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, game->getWidth(), game->getHeight(), SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	SDL_SetWindowFullscreen(game->window, 0);
 	SDL_GLContext Context = SDL_GL_CreateContext(game->window);

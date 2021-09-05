@@ -12,8 +12,6 @@ Game::~Game() {
 }
 
 void Game::init() {
-	resources.init();
-	font.init("res/font.fnt", resources.font.getTexID());
 
 	pendulum = new DoublePendulum(sx, sy);
 	
@@ -256,7 +254,7 @@ void Game::render(float alpha) {
 	//font.setColor(1.0f, 1.0f, 1.0f, 1.0f);
 	//font.renderString(0, 0, framespersec);
 
-	renderer.setScale(scale);
+	//renderer.setScale(scale);
 
 	pendulum->render(alpha);
 
@@ -272,38 +270,3 @@ void Game::render(float alpha) {
 	//glEnable(GL_MULTISAMPLE);
 
 }
-
-void Game::setDimensions(float width, float height) {
-	this->height = height;
-	this->width = width;
-}
-
-void Game::setFullscreenDimensions(float width, float height) {
-	this->fullscreenWidth = width;
-	this->fullscreenHeight = height;
-}
-
-float Game::getWidth() {
-	return fullscreen ? fullscreenWidth : width;
-}
-
-float Game::getHeight() {
-	return fullscreen ? fullscreenHeight : height;
-}
-
-float Game::getScale() {
-	return scale;
-}
-
-BitmapFont Game::getFont() {
-	return font;
-}
-
-Renderer* Game::getRenderer() {
-	return &renderer;
-}
-
-Resources Game::getResources() {
-	return resources;
-}
-

@@ -4,19 +4,14 @@
 #include <SDL_image.h>
 #include <iostream>
 #include <fstream>
-#include "BitmapFont.h"
-#include "Texture.h"
-#include "Renderer.h"
-#include "Resources.h"
 #include "DoublePendulum.h"
 
 class Game {
 public:
 	Game();
 	~Game();
-	Texture loadTexture(std::string path, GLint param);
+	
 	SDL_Window* window;
-	Resources resources;
 
 	DoublePendulum* pendulum;
 	//DoublePendulum* pendulum;
@@ -29,14 +24,8 @@ public:
 	int updates;
 	void drawSquiggle(float x, float y, float angle, float scale);
 	void render(float alpha);
-	void setDimensions(float width, float height);
-	void setFullscreenDimensions(float width, float height);
-	float getWidth();
-	float getHeight();
-	float getScale();
-	BitmapFont getFont();
-	Renderer* getRenderer();
-	Resources getResources();
+	int getWidth() { return 200; }
+	int getHeight() { return 200;  }
 
 	GLuint pbo;
 	GLuint fbo, render_buf, normal_fbo;
@@ -62,8 +51,6 @@ public:
 	bool mousePressed = false;
 
 private:
-	Renderer renderer;
-	BitmapFont font;
 	int state;
 	int fps;
 
