@@ -10,6 +10,8 @@
 int main(int argc, char** argv) {
 
 
+	int number = 10 + 5;
+	std::cout << number << std::endl;
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		std::cerr << "SDL failed to initialize" << std::endl;
 	}
@@ -79,7 +81,7 @@ int main(int argc, char** argv) {
 
 	//glDisable(GL_DEPTH_TEST);
 
-	GLuint pbo;
+	//GLuint pbo;
 //	glGenBuffers(1, &pbo);
 //	glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo);
 //	glBufferData(GL_PIXEL_PACK_BUFFER, game->iw * game->ih * 4, NULL, GL_DYNAMIC_READ);
@@ -119,7 +121,7 @@ int main(int argc, char** argv) {
 	}
 
 
-	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 8, GL_RGBA, game->iw, game->ih, GL_TRUE);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 16, GL_RGBA, game->iw, game->ih, GL_TRUE);
 
 
 
@@ -135,13 +137,13 @@ int main(int argc, char** argv) {
 
 	glGenRenderbuffers(1, &render_buf);
 	glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_RGBA8, game->iw, game->ih);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 16, GL_RGBA8, game->iw, game->ih);
 	std::cout << glGetError() << std::endl;
 	//glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_RGBA8, game->iw, game->ih);
 
 	glGenRenderbuffers(1, &depthrenderbuffer);
 	glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 8, GL_DEPTH_COMPONENT, game->iw, game->ih);
+	glRenderbufferStorageMultisample(GL_RENDERBUFFER, 16, GL_DEPTH_COMPONENT, game->iw, game->ih);
 	std::cout << glGetError() << std::endl;
 	
 	
@@ -175,10 +177,9 @@ int main(int argc, char** argv) {
 //	game->pbo = pbo;
 	game->init();
 
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	std::cout << glGetError() << std::endl;
-
 	int curFPS = 0;
 
 	int updates = 0;
@@ -198,91 +199,23 @@ int main(int argc, char** argv) {
 	int yf = 1;
 
 	float scale = 1.0f;
-	while (true)
-	{
-	start:
-
-		if (t >= 1.0f) {
-			t -= 1.0f;
-			std::cout << "FPS: " << frames << " | UPS: " << updates << std::endl;
-			curFPS = frames;
-			frames = 0;
-			updates = 0;
-		}
-
-		Uint64 newTime = SDL_GetPerformanceCounter();
-		deltaTime = float(newTime - currentTime) / SDL_GetPerformanceFrequency();
-		currentTime = newTime;
-		//std::cout << deltaTime << std::endl;
-		accumulator += deltaTime;
-
-
-		//std::cout << "delta: " << deltaTime << std::endl;
-	
-
-		
-		while (accumulator >= dt) {
-			scale -= 0.001f;
-			updates++;
-			totalUpdates++;
-			SDL_Event event;
-			while (SDL_PollEvent(&event))
-			{
-				if (event.type == SDL_QUIT)
-				{
-
-					goto end;
-				}
-				else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP || event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEMOTION) {
-					game->input(&event);
-				}
-			}
-
-
-			game->update(dt, totalUpdates, curFPS);
-			t += dt;
-			accumulator -= dt;
-			// process input with every update
-		}
-
-
-		float alpha = accumulator / dt;
-		glPushMatrix();
-		//std::cout << glGetError() << std::endl;
-		//glScalef(scale, scale, 1.0f);
-	
-	
-		
-		// render here
-
-		//glViewport(0, 0, game->getWidth(), game->getWidth());
-		//glClearColor(1.0f, 1.0f, 1.0f, 0.f);
-		//glClear(GL_COLOR_BUFFER_BIT);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-		//glEnable(GL_BLEND);
-
-		game->render(alpha);
-
-		
-
-		frames++;
-
-		glPopMatrix();
-
-		SDL_GL_SwapWindow(game->window);
-		//SDL_RenderPresent(game->getRenderer());
-	}
 
 end:
-	glDeleteBuffers(1, &pbo);
+	//glDeleteBuffers(1, &pbo);
 	glDeleteFramebuffers(1, &fbo);
 	glDeleteFramebuffers(1, &normal_fbo);
+	glDeleteRenderbuffers(1, &normal_depthrenderbuffer);
+	glDeleteRenderbuffers(1, &normal_render_buf);
 	glDeleteRenderbuffers(1, &depthrenderbuffer);
 	glDeleteRenderbuffers(1, &render_buf);
+	glDeleteTextures(1, &texture);
+	glDeleteTextures(1, &normal_texture);
 	SDL_DestroyWindow(game->window);
 	Mix_Quit();
     IMG_Quit();
 	SDL_Quit();
+
+	delete game;
 
 	return 0;
 }

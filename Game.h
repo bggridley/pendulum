@@ -3,20 +3,12 @@
 #include <glew.h>
 #include <SDL_image.h>
 #include <iostream>
+#include <fstream>
 #include "BitmapFont.h"
 #include "Texture.h"
 #include "Renderer.h"
 #include "Resources.h"
-
-
-
-//class Item; // we're not going to save explicit different items so we don't need multiple forward declarations like with GuiPaused et
-class Item;
-class Inventory;
-class World;
-class GuiMainMenu;
-class GuiPaused;
-class Gui;
+#include "DoublePendulum.h"
 
 class Game {
 public:
@@ -26,10 +18,14 @@ public:
 	SDL_Window* window;
 	Resources resources;
 
-
+	DoublePendulum* pendulum;
+	//DoublePendulum* pendulum;
 	void init(); // this is necessary so that textures can be created
+	void printScreen(int i);
 	void input(SDL_Event* event);
 	void update(float delta, int updateCount, int frameCount);
+	void updateLogic(float delta, int updateCount);
+	void updateMany(int updates, float deltaTime);
 	int updates;
 	void drawSquiggle(float x, float y, float angle, float scale);
 	void render(float alpha);
@@ -45,32 +41,13 @@ public:
 	GLuint pbo;
 	GLuint fbo, render_buf, normal_fbo;
 
-	std::vector<float> pointArray;
+	float iw = 3840;// 1920;// 3840;//1280;// 3840;// 1280;// 3840;//1280;// 3840;
+	float ih = 3840;// 1080;// 3840;// 720;// 3840;// 720;// 3840;// 720;// 3840;
 
-	float iw = 1280;// 3840;//1280;// 3840;
-	float ih = 720;//3840;// 720;// 3840;
-	float mass1 = 40;
-	float mass2 = 40;
-
-	float length1 = 250.0f; // 125
-	float length2 = 180.0f; // 180
+	bool updatem = false;
 
 	float sx = iw / 2;
 	float sy = ih / 2;
-
-	float theta1 = 3.14f;
-	float theta2 = 0.0f;
-
-	float px = 0.0f;
-	float py = 0.0f;
-
-	float pa = 0.0f;
-	float pv = 0.0f;
-
-	float theta1_v = 0.0f; // angular velocity
-	float theta2_v = 0.0f;
-
-	float g = 19.81f;
 
 	enum GameState {
 		MAIN_MENU,
